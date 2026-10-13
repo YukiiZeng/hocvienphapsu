@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Viện Phép Thuật</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thay Plus Jakarta Sans bằng Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #030712; color: #f8fafc; }
+        .font-fantasy { font-family: 'Cinzel', serif; }
+    </style>
+</head>
+<!-- Sửa từ class cũ thành class này để bố cục tự dàn đều và căn giữa chuẩn trên Desktop -->
+<body class="min-h-screen bg-[#030712] text-slate-100 flex flex-col items-center py-6 px-4">
+
+    <!-- Header Thông tin người chơi -->
+    <header class="w-full max-w-2xl bg-slate-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-4 relative flex items-center justify-between min-h-[100px]">
+        
+    <div class="flex items-center gap-3 pr-28">
+    <!-- Thêm onclick, cursor-pointer, hover và title vào đây -->
+    <img id="player-avatar-header" onclick="togglePlayerProfileModal(true)" src="images/avatars/warrior_m.png" class="w-12 h-12 rounded-xl border-2 border-amber-500 object-cover flex-shrink-0 cursor-pointer hover:scale-105 transition-transform" alt="Avatar" title="Nhấp để xem hồ sơ chi tiết">
+    
+    <div class="flex-1 min-w-0">
+        <h1 id="player-name-display" class="font-fantasy font-bold text-amber-400 text-base truncate">Pháp Sư Tập Sự</h1>
+        <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+            <span>Cấp: <span id="player-level" class="text-amber-300 font-bold">1</span></span>
+            <span>•</span>
+            <span>Nghề: <span id="player-class-name" class="text-amber-300 font-bold">Chiến Binh</span></span>
+        </div>
+        <div class="flex items-center gap-2 text-[10px] text-slate-300 mt-1.5 font-mono bg-slate-950/80 px-2 py-1 rounded border border-slate-800 flex-wrap">
+            <span title="Tấn Công">⚔️ <span id="header-stat-atk" class="text-rose-400 font-bold">10</span></span>
+            <span title="Phòng Thủ">🛡️ <span id="header-stat-def" class="text-blue-400 font-bold">5</span></span>
+            <span title="Ma Lực">🔮 <span id="header-stat-mag" class="text-purple-400 font-bold">5</span></span>
+            <span title="Tốc Độ">⚡ <span id="header-stat-spd" class="text-emerald-400 font-bold">8</span></span>
+            
+            <button onclick="toggleStatModal(true)" id="btn-open-stat-modal" class="ml-1 bg-amber-600 hover:bg-amber-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold transition-all shadow hidden">
+                + Điểm (<span id="stat-points-badge">0</span>)
+            </button>
+        </div>
+    </div>
+</div>
+
+        <div class="absolute top-3.5 right-3.5 flex flex-col items-end gap-1.5 z-10">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 flex flex-col items-end shadow-inner">
+                <span class="text-xs text-cyan-400 font-bold flex items-center gap-1">
+                    ⚡ <span id="player-stamina">20</span>/<span id="player-max-stamina">20</span>
+                </span>
+                <span id="stamina-timer" class="text-[9px] text-amber-300/80 font-mono"></span>
+            </div>
+            
+            <button onclick="logoutUser()" class="text-[9px] bg-rose-950/60 hover:bg-rose-900 text-rose-300 px-2 py-0.5 rounded border border-rose-800 transition-all font-semibold shadow">🔒 Đăng Xuất</button>
+        </div>
+    </header>
+    <!-- BẢNG ADMIN NHANH (Chỉ hiện khi đăng nhập tài khoản admin) -->
+<div id="admin-panel" class="hidden w-full max-w-xl mx-auto mb-3 bg-purple-950/90 border border-purple-500/60 rounded-2xl p-3 shadow-xl backdrop-blur-md flex items-center justify-between">
+    <div class="flex items-center gap-2">
+        <span class="text-sm">👑</span>
+        <span class="text-xs font-bold text-purple-300 uppercase tracking-wider">Khu Vực Quản Trị Viên (Admin)</span>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="adminAddGold()" class="bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all shadow">
+            💰 +1 Tr Vàng
+        </button>
+        <button onclick="adminMaxStamina()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all shadow">
+            ⚡ Đầy ⚡
+        </button>
+    </div>
+</div>
+
+    <!-- Main Content Container -->
+   <main class="w-full max-w-xl mx-auto flex flex-col gap-4">
+        
+        <!-- Status & Stats Panel -->
+        <section class="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 shadow-xl backdrop-blur-md">
+            <div class="mb-3.5">
+                <div class="flex justify-between items-center text-xs mb-1">
+                    <span class="text-amber-400 font-bold tracking-wider flex items-center gap-1">
+                        ✨ KINH NGHIỆM (EXP)
+                    </span>
+                    <span class="text-amber-300 font-mono text-[11px] font-semibold">
+                        <span id="player-exp">0</span> / <span id="player-max-exp">100</span>
+                    </span>
+                </div>
+                <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-amber-500/20 shadow-inner relative">
+                    <div id="player-exp-bar" class="bg-gradient-to-r from-amber-600 to-amber-400 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(245,158,11,0.5)]" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-rose-500/20 shadow-inner">
+                    <div class="flex justify-between items-center text-xs mb-1">
+                        <span class="text-rose-400 font-bold flex items-center gap-1">❤️ MÁU (HP)</span>
+                        <span class="text-rose-300 font-mono text-[11px] font-semibold">
+                            <span id="player-hp">100</span>/<span id="player-max-hp">100</span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-900">
+                        <div id="player-hp-bar" class="bg-gradient-to-r from-rose-600 to-rose-500 h-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(244,63,94,0.4)]" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-cyan-500/20 shadow-inner">
+                    <div class="flex justify-between items-center text-xs mb-1">
+                        <span class="text-cyan-400 font-bold flex items-center gap-1">⚡ NĂNG LƯỢNG (MP)</span>
+                        <span class="text-cyan-300 font-mono text-[11px] font-semibold">
+                            <span id="player-mp">50</span>/<span id="player-max-mp">50</span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-900">
+                        <div id="player-mp-bar" class="bg-gradient-to-r from-cyan-600 to-cyan-400 h-full transition-all duration-300 ease-out shadow-[0_0_8px_rgba(6,182,212,0.4)]" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest">Khu vực hiện tại</p>
+                    <h2 id="current-map-name" class="font-fantasy text-amber-300 font-bold text-sm">Thành Phố Ánh Sáng</h2>
+                </div>
+                <button onclick="toggleMapModal(true)" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-lg transition-all shadow">🗺️ Đổi Bản Đồ</button>
+            </div>
+        </section>
+
+        <!-- Actions Panel (Cố định sẵn cấu trúc để giữ nguyên trạng thái cooldown của nút) -->
+<section class="bg-slate-900/95 border border-amber-500/30 rounded-2xl p-4 shadow-xl backdrop-blur-md">
+    
+    <!-- 1. KHUNG PHIÊU LƯU (Hiển thị ở các map thường) -->
+    <div id="adventure-panel">
+        <div class="flex items-center justify-between mb-2.5 px-1">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                ⚔️ PHIÊU LƯU
+            </h3>
+            <span class="text-[10px] text-amber-400/80 font-mono">Tiêu hao ⚡ năng lượng mỗi hành động</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <button id="btn-hunt" onclick="doAction('hunt')" class="relative overflow-hidden bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 hover:from-amber-500 hover:to-amber-800 p-4 rounded-xl shadow-lg border border-amber-400/40 flex flex-col items-center justify-center transition-all duration-300 group hover:shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                <span class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">⚔️</span>
+                <span class="font-fantasy font-bold text-sm text-white tracking-wide">Săn Quái</span>
+                <span id="cd-hunt" class="text-[10px] text-amber-200 mt-1 font-mono bg-black/30 px-2 py-0.5 rounded-full border border-amber-500/20">Tiêu hao 1 ⚡</span>
+            </button>
+
+            <button id="btn-gather" onclick="doAction('gather')" class="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 hover:from-emerald-500 hover:to-emerald-800 p-4 rounded-xl shadow-lg border border-emerald-400/40 flex flex-col items-center justify-center transition-all duration-300 group hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                <span class="text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">🌿</span>
+                <span class="font-fantasy font-bold text-sm text-white tracking-wide">Thu Thập</span>
+                <span id="cd-gather" class="text-[10px] text-emerald-200 mt-1 font-mono bg-black/30 px-2 py-0.5 rounded-full border border-emerald-500/20">Tiêu hao 1 ⚡</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. KHUNG MÔN PHÁI (Chỉ hiện khi ở Tổng Đà Môn Phái) -->
+    <div id="sect-panel" class="hidden">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                ⛩️ TỔNG ĐÀ MÔN PHÁI
+            </h3>
+            <span class="text-[10px] text-purple-300 font-mono bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800">Khu vực an toàn</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-xl border border-purple-500/30 mb-3 flex items-start gap-3 shadow-inner">
+            <div class="w-10 h-10 rounded-xl bg-purple-900/40 border border-purple-500/50 flex items-center justify-center text-xl flex-shrink-0">🧙‍♂️</div>
+            <div class="flex-1">
+                <p id="sect-npc-name" class="text-xs font-bold text-purple-300 mb-1">Trưởng Lão</p>
+                <p id="sect-npc-desc" class="text-[11px] text-slate-300 italic leading-relaxed">"Nơi truyền thụ tâm pháp độc môn và kỹ năng chiến đấu tối thượng."</p>
+            </div>
+        </div>
+        <button onclick="openSkillTrainingModal()" class="w-full py-3 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 hover:from-purple-500 hover:to-indigo-700 text-white font-bold rounded-xl text-xs transition-all shadow-lg flex items-center justify-center gap-2">
+            <span>📜 Học & Nghiên Cứu Kỹ Năng Môn Phái</span>
+        </button>
+    </div>
+
+</section>
+
+
+        <!-- Log & Inventory -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-col h-44">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">📜 Nhật ký hành trình</h3>
+                    <button onclick="clearActionLog()" class="text-[10px] text-slate-500 hover:text-slate-300">Xóa</button>
+                </div>
+                <div id="action-log" class="flex-1 overflow-y-auto text-xs space-y-1 pr-1 font-mono text-slate-300">
+                    <p>> Chào mừng đến với Học Viện Phép Thuật!</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-col h-44">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">📦 Túi đồ</h3>
+                        <span class="text-[10px] text-amber-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800">💰 <span id="player-gold">150</span> Vàng</span>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="toggleInventoryModal(true)" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-cyan-400 px-2 py-1 rounded font-bold transition-all">📂 Mở Túi</button>
+                        <button onclick="toggleShopModal(true)" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 px-2 py-1 rounded font-bold transition-all">🛒 Cửa Hàng</button>
+                    </div>
+                </div>
+                <div id="inventory-list" class="flex-1 overflow-hidden grid grid-cols-3 gap-2 content-start pr-1"></div>
+            </div>
+        </div>
+
+        <div class="flex justify-center pt-2">
+            <button onclick="resetGameProgress()" class="bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 text-xs font-semibold px-3 py-1.5 rounded-xl border border-rose-800/50 transition-all opacity-80 hover:opacity-100">
+                🗑️ Reset Tiến Trình (Debug)
+            </button>
+        </div>
+    </main>
+
+    <!-- COMBAT MODAL -->
+    <div id="combat-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl text-center">
+            <h3 id="combat-title" class="font-fantasy font-bold text-amber-400 text-lg mb-2">⚔️ Chạm trán Quái Vật</h3>
+            <div id="combat-turn-badge" class="text-xs text-slate-400 mb-4 font-mono">Lượt: 1/20</div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4 items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
+
+<div class="flex flex-col items-center">
+    <img id="combat-player-avatar" src="images/avatars/warrior_m.png" class="w-14 h-14 rounded-xl border border-amber-500 object-cover mb-1">
+    <span id="combat-player-name" class="text-xs font-bold text-amber-300">Pháp Sư</span>
+    <span class="text-[10px] text-rose-400">HP: <span id="combat-player-hp">100</span>/<span id="combat-player-max-hp">100</span></span>
+    <!-- Thêm dòng hiển thị MP này vào -->
+    <span class="text-[10px] text-cyan-400">MP: <span id="combat-player-mp">50</span>/<span id="combat-player-max-mp">50</span></span>
+    <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
+        <div id="combat-player-hp-bar" class="bg-rose-500 h-full" style="width: 100%"></div>
+    </div>
+</div>
+
+
+                <div class="flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-xl border border-rose-500 bg-rose-950/30 flex items-center justify-center text-2xl mb-1">👹</div>
+                    <span id="combat-monster-name" class="text-xs font-bold text-rose-300">Quái Vật</span>
+                    <span class="text-[10px] text-rose-400">HP: <span id="combat-monster-hp">50</span>/<span id="combat-monster-max-hp">50</span></span>
+                    <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1 overflow-hidden">
+                        <div id="combat-monster-hp-bar" class="bg-rose-500 h-full" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="combat-log" class="bg-slate-950 border border-slate-800 rounded-xl p-2 h-24 overflow-y-auto text-xs text-left mb-4 font-mono text-slate-300 space-y-1">
+                <p>> Bắt đầu trận chiến!</p>
+            </div>
+
+            <!-- Cụm điều khiển trong combat-modal tại index.html -->
+<div class="flex flex-col gap-2">
+    <!-- Danh sách kỹ năng học được (hiển thị theo cấp độ) -->
+    <div id="combat-skills-container" class="grid grid-cols-2 gap-2">
+        <!-- Render tự động -->
+    </div>
+
+    <!-- Nút hành động cơ bản -->
+    <div class="flex gap-2">
+        <button onclick="executeCombatTurn()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs transition-all shadow">⚔️ Tấn Công</button>
+        <button onclick="fleeCombat()" class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition-all">🏃 Tẩu Thoát</button>
+    </div>
+</div>
+
+            
+        </div>
+    </div>
+    
+    <!-- PLAYER PROFILE MODAL -->
+<div id="player-profile-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-fantasy font-bold text-amber-400 text-base">👤 Hồ Sơ Nhân Vật</h3>
+            <button onclick="togglePlayerProfileModal(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+
+        <!-- Thông tin tổng quan -->
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 flex items-center gap-3">
+            <img id="profile-avatar" src="images/avatars/warrior_m.png" class="w-14 h-14 rounded-xl border border-amber-500 object-cover">
+            <div class="flex-1 min-w-0">
+                <h4 id="profile-name" class="font-bold text-amber-300 text-sm truncate">Tên Pháp Sư</h4>
+                <p class="text-xs text-slate-400">Cấp: <span id="profile-level" class="text-amber-400 font-bold">1</span> • Nghề: <span id="profile-class" class="text-amber-400 font-bold">Chiến Binh</span></p>
+                <p class="text-[10px] text-amber-400 font-mono mt-0.5">💰 Tổng Vàng: <span id="profile-gold">150</span>đ</p>
+            </div>
+        </div>
+
+        <!-- Thanh trạng thái HP, MP, Thể lực -->
+        <div class="space-y-2 mb-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-rose-400 font-bold">❤️ Máu (HP)</span>
+                    <span class="text-rose-300 font-mono"><span id="profile-hp">100</span>/<span id="profile-max-hp">100</span></span>
+                </div>
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                    <div id="profile-hp-bar" class="bg-rose-500 h-full transition-all" style="width: 100%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-cyan-400 font-bold">⚡ Năng lượng (MP)</span>
+                    <span class="text-cyan-300 font-mono"><span id="profile-mp">50</span>/<span id="profile-max-mp">50</span></span>
+                </div>
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                    <div id="profile-mp-bar" class="bg-cyan-500 h-full transition-all" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-900">
+                <span class="text-amber-400 font-bold">⚡ Thể lực hành động:</span>
+                <span class="text-amber-300 font-mono font-bold"><span id="profile-stamina">20</span>/<span id="profile-max-stamina">20</span></span>
+            </div>
+        </div>
+
+        <!-- Các chỉ số chi tiết -->
+        <div class="mb-3">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📊 Chỉ Số Chi Tiết</h4>
+<div class="grid grid-cols-2 gap-2 text-xs bg-slate-950 p-3 rounded-xl border border-slate-800">
+    <div class="flex justify-between"><span class="text-slate-400">💪 Sức mạnh (STR):</span> <span id="profile-stat-str" class="text-amber-400 font-bold">8</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">🧠 Tinh thần (SPI):</span> <span id="profile-stat-spi" class="text-cyan-400 font-bold">8</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">⚔️ Tấn công:</span> <span id="profile-stat-atk" class="text-rose-400 font-bold">10</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">🛡️ Phòng thủ:</span> <span id="profile-stat-def" class="text-blue-400 font-bold">5</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">🔮 Ma lực:</span> <span id="profile-stat-mag" class="text-purple-400 font-bold">5</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">🛡️✨ Kháng phép:</span> <span id="profile-stat-mdef" class="text-indigo-400 font-bold">5</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">🏃 Nhanh nhẹn:</span> <span id="profile-stat-agi" class="text-teal-400 font-bold">5</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">⚡ Tốc độ:</span> <span id="profile-stat-spd" class="text-emerald-400 font-bold">8</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">💥 Chí mạng:</span> <span id="profile-stat-crit" class="text-yellow-400 font-bold">5%</span></div>
+    <div class="flex justify-between"><span class="text-slate-400">✨ Điểm tiềm năng:</span> <span id="profile-stat-points" class="text-amber-300 font-bold">0</span></div>
+</div>
+
+        </div>
+
+        <!-- Danh sách kỹ năng đã sở hữu -->
+        <div class="flex-1 overflow-y-auto mb-3">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📜 Kỹ Năng Đã Sở Hữu</h4>
+            <div id="profile-skills-list" class="space-y-1.5 pr-1">
+                <!-- Render động các kỹ năng đã học -->
+            </div>
+        </div>
+
+        <button onclick="togglePlayerProfileModal(false)" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Đóng</button>
+    </div>
+</div>
+
+
+    <!-- SHOP MODAL -->
+    <div id="shop-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-fantasy font-bold text-amber-400 text-base">🛒 Cửa Hàng Học Vụ</h3>
+                <button onclick="toggleShopModal(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 flex items-center gap-3">
+                <img id="shop-player-avatar" src="images/avatars/warrior_m.png" class="w-12 h-12 rounded-xl border border-amber-500 object-cover">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-1">
+                        <span id="shop-player-name" class="text-xs font-bold text-amber-300">Pháp Sư</span>
+                        <span class="text-xs text-amber-400 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">💰 <span id="shop-player-gold">150</span></span>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-rose-400 mb-0.5">
+                        <span>HP: <span id="shop-player-hp">100</span>/<span id="shop-player-max-hp">100</span></span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden mb-1 border border-slate-800">
+                        <div id="shop-player-hp-bar" class="bg-rose-500 h-full transition-all" style="width: 100%"></div>
+                    </div>
+                    <div class="text-[10px] text-cyan-400 font-bold">
+                        ⚡ Năng lượng: <span id="shop-player-stamina">20</span>/<span id="shop-player-max-stamina">20</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2 mb-4">
+    <!-- Thuốc Hồi Mana -->
+    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div>
+            <p class="text-xs font-bold text-amber-300">🧪 Thuốc Hồi Mana (30 💰)</p>
+            <p class="text-[10px] text-slate-400">Hồi phục nhanh 10 ⚡ năng lượng</p>
+        </div>
+        <button onclick="buyShopItem('mana_potion')" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-lg transition-all shadow">Mua</button>
+    </div>
+
+    <!-- Bình Máu Nhỏ (30%) -->
+    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div>
+            <p class="text-xs font-bold text-rose-300">❤️ Bình Máu Nhỏ (35 💰)</p>
+            <p class="text-[10px] text-slate-400">Hồi 30% HP tối đa</p>
+        </div>
+        <button onclick="buyShopItem('hp_potion_small')" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-all shadow">Mua</button>
+    </div>
+
+    <!-- Bình Máu Vừa (45%) -->
+    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div>
+            <p class="text-xs font-bold text-rose-300">💖 Bình Máu Vừa (65 💰)</p>
+            <p class="text-[10px] text-slate-400">Hồi 45% HP tối đa</p>
+        </div>
+        <button onclick="buyShopItem('hp_potion_medium')" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-all shadow">Mua</button>
+    </div>
+
+    <!-- Bình Máu To (60%) -->
+    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div>
+            <p class="text-xs font-bold text-rose-300">💝 Bình Máu To (110 💰)</p>
+            <p class="text-[10px] text-slate-400">Hồi 60% HP tối đa</p>
+        </div>
+        <button onclick="buyShopItem('hp_potion_large')" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-all shadow">Mua</button>
+    </div>
+</div>
+            <button onclick="toggleShopModal(false)" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Đóng</button>
+        </div>
+    </div>
+
+    <!-- MAP MODAL -->
+    <div id="map-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="map-modal-title" class="font-fantasy font-bold text-amber-400 text-base">🗺️ Bản Đồ Thế Giới</h3>
+                <button onclick="toggleMapModal(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
+                <button onclick="teleportToMySect()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg transition-all shadow">⛩️ Về Môn Phái</button>
+            </div>
+            <div class="mb-3 text-xs text-slate-300 space-y-1 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <p>👹 Quái thường: <span id="monster-normal" class="text-amber-300">--</span></p>
+                <p>🐾 Quái đặc hữu: <span id="monster-endemic" class="text-amber-300">--</span></p>
+                <p>👑 Boss: <span id="monster-boss" class="text-rose-400 font-bold">--</span></p>
+                <p>🌿 Vật phẩm thường: <span id="item-common" class="text-emerald-300">--</span></p>
+                <p>💎 Vật phẩm độc quyền: <span id="item-exclusive" class="text-cyan-300">--</span></p>
+            </div>
+            <div id="connected-routes" class="space-y-2 mb-4 max-h-40 overflow-y-auto pr-1"></div>
+            <button onclick="toggleMapModal(false)" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Đóng</button>
+        </div>
+    </div>
+
+    <!-- CHARACTER CREATION MODAL -->
+    <div id="character-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/50 w-full max-w-md rounded-2xl p-5 shadow-2xl text-center">
+            <h3 class="font-fantasy font-bold text-amber-400 text-lg mb-1">🎓 Nhập Học Học Viện Phép Thuật</h3>
+            <p class="text-xs text-slate-400 mb-3">Chọn ngoại hình và điền tên pháp sư của bạn</p>
+
+            <div id="class-info-panel" class="mb-3 p-3 bg-slate-950 border border-amber-500/40 rounded-xl text-left shadow-inner">
+                <h4 id="info-class-name" class="text-amber-400 font-bold text-xs mb-1">⚔️ Lớp nhân vật: Chiến Binh</h4>
+                <p id="info-class-gender" class="text-xs text-slate-400 mb-1">Giới tính: Nam</p>
+                <p id="info-class-lore" class="text-xs text-slate-300 italic mb-2">"Dũng cảm và kiên định, luôn xông pha đầu sóng ngọn gió bảo vệ đồng đội."</p>
+                <div class="flex flex-col sm:flex-row sm:gap-4 text-xs border-t border-slate-800 pt-2">
+                    <span id="info-class-strengths" class="text-emerald-400">💪 Mạnh: Chỉ số HP và phòng thủ cơ bản tốt</span>
+                    <span id="info-class-weaknesses" class="text-rose-400">⚠️ Yếu: Thiếu tính cơ động trước các mục tiêu tầm xa</span>
+                </div>
+            </div>
+
+            <div class="mb-4 max-h-[190px] overflow-y-auto pr-1">
+                <div class="grid grid-cols-4 gap-2">
+                    <div onclick="selectClass('warrior_m', this)" class="avatar-item cursor-pointer p-1 bg-slate-800 border-2 border-amber-500 scale-105 rounded-xl hover:border-amber-400 transition-all flex items-center justify-center"><img src="images/avatars/warrior_m.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('warrior_f', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/warrior_f.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('archer_m', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/archer_m.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('archer_f', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/archer_f.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('bard_m', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/bard_m.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('bard_f', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/bard_f.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('hunter_m', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/hunter_m.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('hunter_f', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/hunter_f.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('wizard', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/wizard.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('witch', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/witch.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('knight', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/knight.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                    <div onclick="selectClass('healer', this)" class="avatar-item cursor-pointer p-1 bg-slate-900 border-2 border-slate-700 rounded-xl hover:border-amber-500 transition-all flex items-center justify-center"><img src="images/avatars/healer.png" class="w-12 h-12 object-cover rounded-lg pointer-events-none"></div>
+                </div>
+            </div>
+
+            <div class="mb-4 text-left">
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Tên Pháp Sư:</label>
+                <input type="text" id="player-name-input" placeholder="Nhập tên của bạn..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <button onclick="createCharacter()" class="w-full py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg">✨ Bắt Đầu Hành Trình</button>
+        </div>
+    </div>
+    
+    <!-- SKILL TRAINING MODAL -->
+<div id="skill-training-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-purple-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="font-fantasy font-bold text-purple-400 text-base">📜 Điện Nghiên Cứu Kỹ Năng Môn Phái</h3>
+            <button onclick="toggleSkillTrainingModal(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
+        </div>
+
+        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 mb-3 flex justify-between items-center px-4">
+            <span class="text-xs text-slate-300">Vàng hiện có:</span>
+            <span class="text-xs font-bold text-amber-400 font-mono">💰 <span id="skill-modal-player-gold">0</span></span>
+        </div>
+
+        <div id="skill-training-list" class="flex-1 overflow-y-auto space-y-2 pr-1 mb-3">
+            <!-- Danh sách kỹ năng sẽ được render động tại đây -->
+        </div>
+
+        <button onclick="toggleSkillTrainingModal(false)" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Đóng</button>
+    </div>
+</div>
+
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/50 w-full max-w-sm rounded-2xl p-5 shadow-2xl text-center">
+            <h3 id="auth-title" class="font-fantasy font-bold text-amber-400 text-lg mb-1">✨ Đăng Nhập Tài Khoản</h3>
+            <p class="text-xs text-slate-400 mb-4">Đăng nhập để đồng bộ tiến trình hành trình phép thuật của bạn</p>
+
+            <div id="auth-error" class="mb-3 p-2 bg-rose-950/60 border border-rose-500/50 rounded-xl text-xs text-rose-300 hidden"></div>
+
+            <div class="space-y-3 mb-4 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Tên tài khoản:</label>
+                    <input type="text" id="auth-email" placeholder="Nhập tên tài khoản của bạn..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Mật khẩu:</label>
+                    <div class="relative">
+                        <input type="password" id="auth-password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 text-sm text-white focus:outline-none focus:border-amber-500">
+                        <button type="button" onclick="togglePasswordVisibility('auth-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">👁️</button>
+                    </div>
+                </div>
+                <div id="confirm-password-container" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Xác nhận mật khẩu:</label>
+                    <div class="relative">
+                        <input type="password" id="auth-confirm-password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 text-sm text-white focus:outline-none focus:border-amber-500">
+                        <button type="button" onclick="togglePasswordVisibility('auth-confirm-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">👁️</button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-auth-submit" onclick="handleAuthSubmit()" class="w-full py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg mb-3">Đăng Nhập</button>
+
+            <div class="flex items-center justify-center gap-1 text-xs text-slate-400">
+                <span id="auth-toggle-text">Chưa có tài khoản?</span>
+                <button id="btn-auth-toggle" onclick="toggleAuthMode()" class="text-amber-400 font-bold hover:underline">Đăng ký ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INVENTORY MODAL -->
+    <div id="inventory-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-fantasy font-bold text-amber-400 text-base">📦 Túi Đồ Chi Tiết</h3>
+                <button onclick="toggleInventoryModal(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+            <div id="inventory-modal-list" class="flex-1 overflow-y-auto grid grid-cols-3 gap-2 content-start pr-1 mb-4"></div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+                <button onclick="sellAllItems()" class="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-xs font-bold rounded-xl border border-rose-800 transition-all">💰 Bán Hết</button>
+                <button onclick="toggleInventoryModal(false)" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SELL MODAL -->
+    <div id="sell-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 w-full max-w-sm rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 id="sell-modal-title" class="font-fantasy font-bold text-amber-400 text-sm">Thanh lý vật phẩm</h3>
+                <button onclick="closeSellModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+            
+            <div class="flex items-center gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3">
+                <img id="sell-modal-img" src="" class="w-10 h-10 object-contain" alt="Item">
+                <div>
+                    <h4 id="sell-modal-name" class="text-xs font-bold text-slate-200">Tên vật phẩm</h4>
+                    <p id="sell-modal-price" class="text-[10px] text-amber-400">Đơn giá: 0đ</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+<label class="block text-xs font-semibold text-slate-300 mb-1">Số lượng bán:</label>
+                <div class="flex items-center gap-2">
+                    <button onclick="adjustSellQty(-1)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold">-</button>
+                    <input type="number" id="sell-quantity-input" min="1" value="1" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-center text-sm text-white focus:outline-none focus:border-amber-500">
+                    <button onclick="adjustSellQty(1)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold">+</button>
+                    <button onclick="setMaxSellQty()" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold">Max</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="confirmSell()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-all shadow">Xác Nhận Bán</button>
+                <button onclick="closeSellModal()" class="py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Hủy</button>
+            </div>
+        </div>
+    </div>
+        <!-- STAT ALLOCATION MODAL -->
+    <div id="stat-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-fantasy font-bold text-amber-400 text-sm">✨ Phân Bổ Điểm Tiềm Năng</h3>
+                <button onclick="toggleStatModal(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+            
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 mb-3 flex justify-between items-center px-4">
+                <span class="text-xs text-slate-300">Điểm chưa sử dụng:</span>
+                <span class="text-base font-bold text-amber-400 font-mono" id="modal-available-points">0</span>
+            </div>
+
+            <div class="space-y-2 overflow-y-auto flex-1 pr-1 mb-3">
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-amber-400">💪 Sức Mạnh (STR)</p>
+                        <p class="text-[9px] text-slate-400">Tăng HP tối đa & ATK cơ bản</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-str" class="text-xs font-bold text-white font-mono">8</span>
+                        <button onclick="allocateStat('str')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-cyan-400">🧠 Tinh Thần (SPI)</p>
+                        <p class="text-[9px] text-slate-400">Tăng MP tối đa & Kháng ma</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-spi" class="text-xs font-bold text-white font-mono">8</span>
+                        <button onclick="allocateStat('spi')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-rose-400">⚔️ Tấn Công (ATK)</p>
+                        <p class="text-[9px] text-slate-400">Sát thương vật lý cơ bản</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-atk" class="text-xs font-bold text-white font-mono">10</span>
+                        <button onclick="allocateStat('atk')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-blue-400">🛡️ Phòng Thủ (DEF)</p>
+                        <p class="text-[9px] text-slate-400">Giảm sát thương vật lý nhận vào</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-def" class="text-xs font-bold text-white font-mono">5</span>
+                        <button onclick="allocateStat('def')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-purple-400">🔮 Ma Lực (MAG)</p>
+                        <p class="text-[9px] text-slate-400">Sát thương phép thuật</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-mag" class="text-xs font-bold text-white font-mono">5</span>
+                        <button onclick="allocateStat('mag')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-indigo-400">🛡️✨ Kháng Ma (MDEF)</p>
+                        <p class="text-[9px] text-slate-400">Giảm sát thương kỹ năng / phép</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-mdef" class="text-xs font-bold text-white font-mono">5</span>
+                        <button onclick="allocateStat('mdef')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-teal-400">🏃 Nhanh Nhẹn (AGI)</p>
+                        <p class="text-[9px] text-slate-400">Tăng sát thương kỹ năng chung</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-agi" class="text-xs font-bold text-white font-mono">5</span>
+                        <button onclick="allocateStat('agi')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-emerald-400">⚡ Tốc Độ (SPD)</p>
+                        <p class="text-[9px] text-slate-400">Tỷ lệ né đòn tấn công</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-spd" class="text-xs font-bold text-white font-mono">8</span>
+                        <button onclick="allocateStat('spd')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <p class="text-xs font-bold text-yellow-400">💥 Chí Mạng (CRIT %)</p>
+                        <p class="text-[9px] text-slate-400">Tỷ lệ gây sát thương chí mạng</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="modal-stat-crit" class="text-xs font-bold text-white font-mono">5</span>
+                        <button onclick="allocateStat('crit')" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="toggleStatModal(false)" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all">Hoàn Tất</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Config -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyAbFzFsGOCsQIksflr7ws4dGx95ZAZgV1E",
+            authDomain: "hocvienphapsu.firebaseapp.com",
+            projectId: "hocvienphapsu",
+            storageBucket: "hocvienphapsu.firebasestorage.app",
+            messagingSenderId: "266106375389",
+            appId: "1:266106375389:web:hocvienphapsu"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var auth = firebase.auth();
+        var db = firebase.firestore();
+    </script>
+
+<!-- Scripts Game -->
+<script src="data.js"></script>
+<script src="logic.js"></script>
+<script src="skills.js"></script> <!-- Thêm file kỹ năng vào đây -->
+<script src="main.js"></script>
+<script src="ui.js"></script>
+
+</body>
+</html>
